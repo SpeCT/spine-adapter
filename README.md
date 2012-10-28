@@ -41,6 +41,8 @@ class BlogPost extends Spine.Model
 
 Using of PrivateChanges handle will connect to `_changes` feed only when user is authenticated.
 
+Call `Spine.Model.CouchChanges.reconnect()` to reconnect all feeds in case if connection was dropped.
+
 To fetch a specific set of records (rather than all records of a type), use the `db` module to retreive a view. Pass the docs from that view to the model's `refresh` method.
 
 ```coffeescript

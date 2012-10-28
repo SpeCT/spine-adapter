@@ -9,35 +9,52 @@ feeds = {} # Cache `_changes` feeds by their url
 Spine.Model.CouchChanges = (opts = {})->
   opts.url = opts.url or duality.getDBURL()
   opts.handler = Spine.Model.CouchChanges.Changes unless opts.handler
-  feeds[opts.url] or feeds[opts.url] =
+  return feeds[opts.url] if feeds[opts.url]
+  feed = feeds[opts.url] =
     changes: new opts.handler opts
     extended: ->
       # need to keep _rev around to support changes feed processing
       @attributes.push "_rev" unless @attributes[ "_rev" ]
       @changes.subscribe @className, @
+  feed.changes.startListening()
+  feed
+
+
+Spine.Model.CouchChanges.reconnect = ->
+  for url, feed of feeds
+    feed.changes.startListening()
 
 
 Spine.Model.CouchChanges.Changes = class Changes
   subscribers: {}
-  query: include_docs: yes
 
-  constructor: (options = {})->
+  constructor: (options = {}) ->
     @url = options.url
-    @startListening()
+    @query = include_docs: yes
 
   subscribe: (classname, klass) =>
     @subscribers[classname.toLowerCase()] = klass
 
   startListening: =>
-    db.use(@url).changes @query, @handler()
+    connectFeed = => db.use(@url).changes @query, @handler()
+    if @query.since then connectFeed()
+    else db.use(@url).info (err, info) => # grab update_seq number
+      return if err                       #     for the first time
+      @query.since = info.update_seq
+      connectFeed()
 
   # returns handler which you may disable by setting handler.disabled flag `true`
-  handler: -> self = (err, resp) =>
-    if self.disabled then false
-    else if err then false # TODO? @trigger error
-    else
-      @acceptChanges resp?.results
-      true
+  handler: ->
+    # disable already registered handler
+    @currentHandler.disabled = true if @currentHandler
+    @currentHandler = (err, resp) => # register new one
+      @currentHandler.disabled = true if err
+      if @currentHandler.disabled then false
+      else if err then false # TODO? @trigger error
+      else
+        @acceptChanges resp.results
+        @query.since = resp.last_seq
+        true
 
   acceptChanges: (changes)->
     return unless changes
@@ -64,13 +81,10 @@ Spine.Model.CouchChanges.Changes = class Changes
 # Start listening for _changes only when user is authenticated
 #   and stop listening for changes when he logged out
 Spine.Model.CouchChanges.PrivateChanges = class PrivateChanges extends Changes
-  startListening: =>
-    session.on "change", @authChanged
+  constructor: ->
+    super
+    session.on "change", @startListening
 
-  authChanged: (userCtx)=>
-    if userCtx.name
-      @currentHandler.disabled = true if @currentHandler
-      @currentHandler = @handler()
-      db.use(@url).changes @query, @currentHandler
-    else
-      @currentHandler.disabled = true if @currentHandler
+  startListening: =>
+    @currentHandler.disabled = true if @currentHandler  # - stop
+    super if session.userCtx?.name                      # - start
