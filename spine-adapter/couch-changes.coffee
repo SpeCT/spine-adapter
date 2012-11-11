@@ -56,26 +56,28 @@ Spine.Model.CouchChanges.Changes = class Changes
         @query.since = resp.last_seq
         true
 
-  acceptChanges: (changes)->
+  acceptChanges: (changes) ->
     return unless changes
-    Spine.CouchAjax.disable =>
-      for doc in changes
-        if modelname = doc.doc?.modelname
-          klass = @subscribers[modelname]
-        unless klass
-          console.warn "changes: can't find subscriber for #{doc.doc.modelname}"
-          continue
-        atts = doc.doc
-        atts.id = atts._id unless atts.id
-        try
-          obj = klass.find atts.id
-          if doc.deleted
-            obj.destroy()
-          else
-            unless obj._rev is atts._rev
-              obj.updateAttributes atts
-        catch e
-          klass.create atts unless doc.deleted
+    Spine.CouchAjax.queue =>
+      Spine.CouchAjax.disable =>
+        for doc in changes
+          if modelname = doc.doc?.modelname
+            klass = @subscribers[modelname]
+          unless klass
+            console.warn "changes: can't find subscriber for #{doc.doc.modelname}"
+            continue
+          atts = doc.doc
+          atts.id = atts._id unless atts.id
+          try
+            obj = klass.find atts.id
+            if doc.deleted
+              obj.destroy()
+            else
+              unless obj._rev is atts._rev
+                obj.updateAttributes atts
+          catch e
+            klass.create atts unless doc.deleted
+      complete: (next) -> setTimeout next, 0
 
 
 # Start listening for _changes only when user is authenticated
