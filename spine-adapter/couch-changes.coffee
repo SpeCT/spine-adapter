@@ -76,7 +76,11 @@ Spine.Model.CouchChanges.Changes = class Changes
               unless obj._rev is doc._rev
                 obj.updateAttributes doc
           catch e
-            klass.create doc unless change.deleted
+            unless change.deleted
+              klass.create doc
+            else
+              klass.trigger "deleted", doc
+              continue
       complete: (next) -> setTimeout next, 0
 
 
