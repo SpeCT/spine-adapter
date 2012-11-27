@@ -18,7 +18,7 @@ create = (doc, req) ->
   [doc, resp]
 
 update = (doc, req) ->
-  delete doc._revisions
+  delete doc._revisions if doc
   new_fields = JSON.parse(req.body)
   delete new_fields.id
   updated_doc = _.defaults(new_fields, doc)
