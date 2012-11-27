@@ -60,23 +60,23 @@ Spine.Model.CouchChanges.Changes = class Changes
     return unless changes
     Spine.CouchAjax.queue =>
       Spine.CouchAjax.disable =>
-        for doc in changes
-          if modelname = doc.doc?.modelname
+        for change in changes
+          if modelname = change.doc?.modelname
             klass = @subscribers[modelname]
           unless klass
-            console.warn "changes: can't find subscriber for #{doc.doc.modelname}"
+            console.warn "changes: can't find subscriber for #{change.doc.modelname}"
             continue
-          atts = doc.doc
-          atts.id = atts._id unless atts.id
+          doc = change.doc
+          doc.id = doc._id unless doc.id
           try
-            obj = klass.find atts.id
-            if doc.deleted
+            obj = klass.find doc.id
+            if change.deleted
               obj.destroy()
             else
-              unless obj._rev is atts._rev
-                obj.updateAttributes atts
+              unless obj._rev is doc._rev
+                obj.updateAttributes doc
           catch e
-            klass.create atts unless doc.deleted
+            klass.create doc unless change.deleted
       complete: (next) -> setTimeout next, 0
 
 
