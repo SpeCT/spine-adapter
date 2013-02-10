@@ -1,11 +1,3 @@
-Spine   = require 'spine/core'
-$       = Spine.$
-Model   = Spine.Model
-duality = require "duality/core"
-db      = require "db"
-
-{_}     = require "underscore"
-
 Spine.Model.include
   toJSON: ->
     result = {}
@@ -72,10 +64,10 @@ class Base
     headers: {'X-Requested-With': 'XMLHttpRequest'}
 
   ajax: (params, defaults) ->
-    $.ajax($.extend({}, @defaults, defaults, params))
+    Spine.$.ajax Spine.$.extend {}, @defaults, defaults, params
 
   queue: (callback) ->
-    CouchAjax.queue(callback)
+    CouchAjax.queue callback
 
 class Collection extends Base
   constructor: (@model) ->
@@ -186,7 +178,7 @@ class Singleton extends Base
 
 
 # CouchAjax endpoint
-Model.host = ''
+Spine.Model.host = ''
 
 Include =
   ajax: -> new Singleton(this)
@@ -201,9 +193,9 @@ Extend =
   ajax: -> new Collection(this)
 
   url: ->
-    "#{duality.getBaseURL()}/spine-adapter/#{@className.toLowerCase()}"
+    "_rewrite/api/#{@className.toLowerCase()}"
 
-Model.CouchAjax =
+Spine.Model.CouchAjax =
   extended: ->
     @fetch @ajaxFetch
     @change @ajaxChange
@@ -217,7 +209,7 @@ Model.CouchAjax =
   ajaxChange: (record, type, options = {}) ->
     record.ajax()[type](options.ajax, options)
 
-Model.CouchAjax.Methods =
+Spine.Model.CouchAjax.Methods =
   extended: ->
     @extend Extend
     @include Include
@@ -225,4 +217,3 @@ Model.CouchAjax.Methods =
 # Globals
 CouchAjax.defaults   = Base::defaults
 Spine.CouchAjax      = CouchAjax
-module?.exports = CouchAjax

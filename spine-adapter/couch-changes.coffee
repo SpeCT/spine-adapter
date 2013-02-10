@@ -1,13 +1,22 @@
-db       = require "db"
-duality  = require "duality/core"
-session  = require "session"
+db = # HACK: emulate changes mathod of kanso `db` module
+  use: (url, opts) ->
+    jqcouch = $.couch.db url
+    changes: (query, callback) ->
+      query = $.extend {}, include_docs: true, query
+      feed = jqcouch.changes query.since, query
+      feed.onChange (data) ->
+        feed.stop() unless callback null, data
+    info: (callback) ->
+      jqcouch.info()
+        .done(callback.bind null, null)
+        .error(callback)
 
 
 feeds = {} # Cache `_changes` feeds by their url
 
 
 Spine.Model.CouchChanges = (opts = {})->
-  opts.url = opts.url or duality.getDBURL()
+  opts.url = opts.url or Spine.Model.host
   opts.handler = Spine.Model.CouchChanges.Changes unless opts.handler
   return feeds[opts.url] if feeds[opts.url]
   feed = feeds[opts.url] =
@@ -38,9 +47,9 @@ Spine.Model.CouchChanges.Changes = class Changes
   startListening: =>
     connectFeed = => db.use(@url).changes @query, @handler()
     if @query.since then connectFeed()
-    else db.use(@url).info (err, info) => # grab update_seq number
+    else db.use(@url).info (err, resp) => # grab update_seq number
       return if err                       #     for the first time
-      @query.since = info.update_seq
+      @query.since = resp.update_seq
       connectFeed()
 
   # returns handler which you may disable by setting handler.disabled flag `true`
@@ -82,15 +91,3 @@ Spine.Model.CouchChanges.Changes = class Changes
               klass.trigger "deleted", doc
               continue
       complete: (next) -> setTimeout next, 0
-
-
-# Start listening for _changes only when user is authenticated
-#   and stop listening for changes when he logged out
-Spine.Model.CouchChanges.PrivateChanges = class PrivateChanges extends Changes
-  constructor: ->
-    super
-    session.on "change", @startListening
-
-  startListening: =>
-    @currentHandler.disabled = true if @currentHandler  # - stop
-    super if session.userCtx?.name                      # - start
