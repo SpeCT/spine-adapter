@@ -61,26 +61,25 @@ Spine.Model.CouchChanges.Changes = class Changes
     Spine.CouchAjax.queue =>
       Spine.CouchAjax.disable =>
         for change in changes
-          if modelname = change.doc?.modelname
-            klass = @subscribers[modelname]
-          unless klass
-            console.warn "changes: can't find subscriber for #{change.doc.modelname}"
-            continue
-          doc = change.doc
+          continue unless doc = change.doc
+          continue unless modelname = doc.modelname
+          continue unless klass = @subscribers[modelname]
           doc.id = doc._id unless doc.id
           try
             obj = klass.find doc.id
             if change.deleted
               obj.destroy()
-            else
-              unless obj._rev is doc._rev
-                obj.updateAttributes doc
+            else unless obj._rev is doc._rev
+              obj.updateAttributes doc
           catch e
             unless change.deleted
               klass.create doc
             else
               klass.trigger "deleted", doc
               continue
+        return
+
+      # call next in Spine.CouchAjax.queue
       complete: (next) -> setTimeout next, 0
 
 
@@ -93,4 +92,4 @@ Spine.Model.CouchChanges.PrivateChanges = class PrivateChanges extends Changes
 
   startListening: =>
     @currentHandler.disabled = true if @currentHandler  # - stop
-    super if session.userCtx?.name                      # - start
+    super if session.userCtx and session.userCtx.name   # - start
