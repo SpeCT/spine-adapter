@@ -15,7 +15,8 @@ db = # HACK: emulate changes mathod of kanso `db` module
 feeds = {} # Cache `_changes` feeds by their url
 
 
-Spine.Model.CouchChanges = (opts = {})->
+Spine.Model.CouchChanges = (opts = {}) ->
+  opts.autoconnect or= false
   opts.url = opts.url or Spine.Model.host
   opts.handler = Spine.Model.CouchChanges.Changes unless opts.handler
   return feeds[opts.url] if feeds[opts.url]
@@ -25,7 +26,7 @@ Spine.Model.CouchChanges = (opts = {})->
       # need to keep _rev around to support changes feed processing
       @attributes.push "_rev" unless @attributes[ "_rev" ]
       @changes.subscribe @className, @
-  feed.changes.startListening()
+  feed.changes.startListening() if opts.autoconnect
   feed
 
 
