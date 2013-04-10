@@ -156,8 +156,10 @@ class Singleton extends Base
       else
         data = @model.fromJSON(data)
 
-      data._rev or = xhr.getResponseHeader('X-Couch-Update-NewRev')
-      data._rev or = data.rev
+      if newRev = xhr.getResponseHeader "X-Couch-Update-NewRev"
+        data._rev = newRev
+      else if data.rev
+        data._rev = data.rev
 
       CouchAjax.disable =>
         if data
