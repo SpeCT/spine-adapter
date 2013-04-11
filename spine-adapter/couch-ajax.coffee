@@ -195,7 +195,8 @@ Extend =
   ajax: -> new Collection(this)
 
   url: ->
-    "_rewrite/api/#{@className.toLowerCase()}"
+    Spine.Model.CouchAjax.urlPrefix or= "_rewrite/api"
+    "#{Spine.Model.CouchAjax.urlPrefix}/#{@className.toLowerCase()}"
 
 Spine.Model.CouchAjax =
   extended: ->
