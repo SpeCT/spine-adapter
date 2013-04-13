@@ -1,6 +1,7 @@
 db = # HACK: emulate changes mathod of kanso `db` module
   use: (url, opts) ->
     jqcouch = $.couch.db url
+    jqcouch.uri = $.couch.urlPrefix + "/#{url}/"
     changes: (query, callback) ->
       query = $.extend {}, include_docs: true, query
       feed = jqcouch.changes query.since, query
