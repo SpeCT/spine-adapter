@@ -1,6 +1,6 @@
 {
   "name": "spine-adapter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "kanso adapter for spine",
   "categories": ["utils"],  
   "modules": ["spine-adapter"],
@@ -11,13 +11,9 @@
   },
 
   "dependencies": {
-    "settings": null,
     "properties": null,
-    "attachments": null,
     "modules": null,
-    "spine": null,
     "underscore": null,
-    "coffee-script-precompiler": null,
-    "duality": null
+    "coffee-script-precompiler": null
   }
 }
