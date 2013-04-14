@@ -13,7 +13,6 @@ create = (doc, req) ->
   doc.modelname = req.query.modelname
   doc._id = req.uuid unless doc._id
   resp =
-    ok: yes
     body: JSON.stringify(doc)
   [doc, resp]
 
@@ -23,13 +22,11 @@ update = (doc, req) ->
   delete new_fields.id
   updated_doc = _.defaults(new_fields, doc)
   resp =
-    ok: yes
     body: JSON.stringify(updated_doc)
   [updated_doc, resp]
 
 destroy = (doc, req) ->
   doc._deleted = yes
   resp =
-    ok: yes
     body: JSON.stringify({})
   [doc, resp]
