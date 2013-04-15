@@ -30,6 +30,7 @@ Spine.Model.CouchChanges = (opts = {}) ->
   feed.changes.startListening() if opts.autoconnect
   feed
 
+Spine.Model.CouchChanges.db = db
 
 Spine.Model.CouchChanges.reconnect = ->
   for url, feed of feeds

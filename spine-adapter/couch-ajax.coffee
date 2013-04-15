@@ -69,7 +69,7 @@ class Base
   queue: (callback) ->
     CouchAjax.queue callback
 
-class Collection extends Base
+class CouchCollection extends Base
   constructor: (@model) ->
 
   find: (id, params) ->
@@ -104,7 +104,7 @@ class Collection extends Base
   errorResponse: (xhr, statusText, error) =>
     @model.trigger('ajaxError', null, xhr, statusText, error)
 
-class Singleton extends Base
+class CouchSingleton extends Base
   constructor: (@record) ->
     @model = @record.constructor
 
@@ -183,7 +183,7 @@ class Singleton extends Base
 Spine.Model.host = ''
 
 Include =
-  ajax: -> new Singleton(this)
+  ajax: -> new CouchSingleton(this)
 
   url: ->
     base = CouchAjax.getURL(@constructor)
@@ -192,7 +192,7 @@ Include =
     base
 
 Extend =
-  ajax: -> new Collection(this)
+  ajax: -> new CouchCollection(this)
 
   url: ->
     Spine.Model.CouchAjax.urlPrefix or= "_rewrite/api"
