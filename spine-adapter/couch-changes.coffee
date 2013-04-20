@@ -1,17 +1,9 @@
-db = # HACK: emulate changes mathod of kanso `db` module
-  use: (url, opts) ->
-    jqcouch = $.couch.db url
-    jqcouch.uri = $.couch.urlPrefix + "/#{url}/"
-    changes: (query, callback) ->
-      query = $.extend {}, include_docs: true, query
-      feed = jqcouch.changes query.since, query
-      feed.onChange (data) ->
-        feed.stop() unless callback null, data
-    info: (callback) ->
-      jqcouch.info()
-        .done(callback.bind null, null)
-        .error(callback)
-
+# Turn off database name encoding
+$.couch._originaldb = $.couch.db
+$.couch.db = (url) ->
+  db = $.couch._originaldb url
+  db.uri = $.couch.urlPrefix + "/#{url}/"
+  db
 
 feeds = {} # Cache `_changes` feeds by their url
 
@@ -30,7 +22,6 @@ Spine.Model.CouchChanges = (opts = {}) ->
   feed.changes.startListening() if opts.autoconnect
   feed
 
-Spine.Model.CouchChanges.db = db
 
 Spine.Model.CouchChanges.reconnect = ->
   for url, feed of feeds
@@ -47,13 +38,13 @@ Spine.Model.CouchChanges.Changes = class Changes
   subscribe: (classname, klass) =>
     @subscribers[classname.toLowerCase()] = klass
 
-  startListening: =>
-    connectFeed = => db.use(@url).changes @query, @handler()
-    if @query.since then connectFeed()
-    else db.use(@url).info (err, resp) => # grab update_seq number
-      return if err                       #     for the first time
-      @query.since = resp.update_seq
-      connectFeed()
+  connectFeed: (callback) ->
+    callback or= @handler()
+    feed = $.couch.db(@url).changes @query.since, @query
+    feed.onChange (data) ->
+      feed.stop() unless callback null, data
+
+  startListening: => @connectFeed()
 
   # returns handler which you may disable by setting handler.disabled flag `true`
   handler: ->
