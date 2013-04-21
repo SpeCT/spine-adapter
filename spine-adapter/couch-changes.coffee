@@ -41,6 +41,7 @@ Spine.Model.CouchChanges.Changes = class Changes
   connectFeed: (callback) ->
     callback or= @handler()
     feed = $.couch.db(@url).changes @query.since, @query
+    feed.onError = -> feed.stop()
     feed.onChange (data) ->
       feed.stop() unless callback null, data
 
