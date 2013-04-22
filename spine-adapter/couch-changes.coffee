@@ -10,10 +10,9 @@ feeds = {} # Cache `_changes` feeds by their url
 
 Spine.Model.CouchChanges = (opts = {}) ->
   opts.autoconnect or= false
-  opts.url = opts.url or Spine.Model.host
-  opts.handler = Spine.Model.CouchChanges.Changes unless opts.handler
-  return feeds[opts.url] if feeds[opts.url]
-  feed = feeds[opts.url] =
+  opts.url         or= Spine.Model.host
+  opts.handler     or= Spine.Model.CouchChanges.Changes
+  feed = feeds[opts.url] or=   # cache
     changes: new opts.handler opts
     extended: ->
       # need to keep _rev around to support changes feed processing
