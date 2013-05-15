@@ -74,13 +74,13 @@ Spine.Model.CouchChanges.Changes = class Changes
           try
             obj = klass.find doc.id
             if change.deleted
-              obj.destroy()
+              obj.destroy fromChanges: true
             else
               unless obj._rev is doc._rev
-                obj.updateAttributes doc
+                obj.updateAttributes doc, fromChanges: true
           catch e
             unless change.deleted
-              klass.create doc
+              klass.create doc, fromChanges: true
             else
               klass.trigger "deleted", doc
               continue
