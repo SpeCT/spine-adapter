@@ -176,7 +176,7 @@ class CouchSingleton extends Base
   errorResponse: (options = {}) =>
     (xhr, statusText, error) =>
       @record.trigger('ajaxError', xhr, statusText, error)
-      options.error?.apply(@record)
+      options.error?.apply(@record, arguments)
 
 
 # CouchAjax endpoint
